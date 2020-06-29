@@ -65,52 +65,41 @@ class enigma{
             }
             return true;
         }
-        char single_enigma_calculate(const int &step, unsigned char c){
-            // phase - circuit from right to left
+        char single_enigma_calculate(const int &step, char c){
             int num_of_rotors_set = rotors_set.size(), temp_step = 1;
             int step_arr[num_of_rotors_set];
             for (int i = num_of_rotors_set-1; i >= 0; --i){
-                step_arr[i] = (step / temp_step);
+                step_arr[i] = (step / temp_step) % 26;
                 temp_step *= 26;
             }
+            // phase - circuit from right to left
             for (int i = num_of_rotors_set - 1; i >= 0; --i){
-                c = (rotors_set[i][(c + step_arr[i]) % 26] - step_arr[i]) % 26;
+                c = rotors_set[i][(c + step_arr[i]) % 26] - step_arr[i];
+                // by exp, test zero is five times faster than add and mod //
+                if(c < 0)
+                    c += 26;
             }
-            c = reflector_set.at(reflector_index)[c];
+            // phase - reflect
+            c = reflector_set.at(reflector_index)[static_cast<unsigned char>(c)];
+            // phase - circuit from left to right
             for(int i = 0; i < num_of_rotors_set; ++i){
-                c = inverse_rotors_set[i][(c + step_arr[i]) % 26];
+                c = inverse_rotors_set[i][(c + step_arr[i]) % 26] - step_arr[i];
+                if(c < 0)
+                    c += 26;
             }
             return c;
+        }
+        void printChar(char num){
+            cout << static_cast<char>(num + 65);
         }
 };
 
 int main(){
     enigma e;
     e.load_rotors_configs();
-    for (int i = 0; i < 10; ++i)
-        cout << static_cast<char>(e.single_enigma_calculate(i, 'A') + 65) << endl;
-    clock_t begin = clock();
-    int num;
-    num = -1;
-
-    for (unsigned long long i = 0; i < 1000000000; ++i){
-        
-        if(num < 0){
-            num += 26;
-        }
+    for (int i = 1; i < 10; ++i){
+        cout << static_cast<char>(e.single_enigma_calculate(i, 'A'-65) + 65) << endl;
     }
-    cout << num - 100 << endl;
-    cout << clock() - begin << endl;
-    begin = clock();
-    num = -1;
-
-    for (unsigned long long i = 0; i < 1000000000; ++i){
-        
-        num += 26;
-        num %= 26;
-    }
-    cout << num-100 << endl;
-    cout << clock() - begin << endl;
 
     return 0;
 }
