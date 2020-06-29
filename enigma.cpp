@@ -89,6 +89,15 @@ class enigma{
             }
             return c;
         }
+
+        string string_enigma_calculate(string plain){
+            string cipher;
+            for (int i = 0; i < plain.size(); ++i){
+                cipher += static_cast<char>(single_enigma_calculate( i+1, plain[i]-65) + 65);
+            }
+            return cipher;
+        }
+
         void printChar(char num){
             cout << static_cast<char>(num + 65);
         }
@@ -98,8 +107,8 @@ int main(){
     enigma e;
     e.load_rotors_configs();
     for (int i = 1; i < 10; ++i){
-        cout << static_cast<char>(e.single_enigma_calculate(i, 'A'-65) + 65) << endl;
+        cout << static_cast<char>(e.single_enigma_calculate(i, 'B'-65) + 65) << endl;
     }
-
+    cout << e.string_enigma_calculate("HELLO") << endl;
     return 0;
 }
