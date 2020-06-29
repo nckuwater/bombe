@@ -38,6 +38,13 @@ class enigma{
             }
             return true;
         }
+        char calculate(char c){
+            // phase - circuit from right to left
+            int num_of_rotors_set = rotors_set.size();
+            for (int i = num_of_rotors_set-1; i >= 0; --i){
+                
+            }
+        }
 };
 
 int main(){
