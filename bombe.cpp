@@ -16,6 +16,7 @@ class bombe_rotor{
         bool test_finished;
         /* selected_rotors_index, init_step store enigma setting */
         vector<int> remain_letters, selected_rotors_index, init_steps, plugboard[26];
+        vector<array<vector<int>, 26>> plugboard_possibilities;
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
         static vector<string> vec_plain, vec_cipher;
@@ -50,6 +51,10 @@ class bombe_rotor{
                 }
             }
             /* check if plugboard is valid */
+            /* 
+                because if only one possibility match, it must be the right one,
+                if it conflict with other, means that the init_step set is wrong.
+            */
             bool used_plug_table[26];
             for (int i = 0; i < 26; i++)
                 used_plug_table[i] = false;
@@ -57,12 +62,16 @@ class bombe_rotor{
             for (int i = 0; i < 26; ++i){
                 if(plugboard[i].empty())
                     continue;
-                is_any_set_valid = false;
-                for (int k = 0; k < plugboard[i].size(); ++k){
-                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][k]])){
-                        /* if both of them are false */
-                        is_any_set_valid = true;
-                        //used_plug_table[i] = used_plug_table[plugboard[i][k]] = true;
+                if(plugboard[i].size() == 1){
+                    is_any_set_valid = false;
+                    for (int k = 0; k < plugboard[i].size(); ++k){
+                        if(!(used_plug_table[i] || used_plug_table[plugboard[i][k]])){
+                            /* if both of them are false */
+                            is_any_set_valid = true;
+                            used_plug_table[i] = used_plug_table[plugboard[i][k]] = true; 
+                        }else{ // the only possible plug (certain one) conflict, means init_step set is wrong.
+                            return false;
+                        }
                     }
                 }
             }
