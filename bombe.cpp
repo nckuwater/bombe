@@ -12,35 +12,56 @@ class bombe_rotor{
     /* each bombe_rotor have one enigma circuit */
     public:
         enigma enigma_machine;
-        int total_tested_init_steps_set, plug_board[26];
+        int total_tested_init_steps_set;
         bool test_finished;
         /* selected_rotors_index, init_step store enigma setting */
-        vector<int> remain_letters, selected_rotors_index, init_steps;
+        vector<int> remain_letters, selected_rotors_index, init_steps, plugboard[26];
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
         bool test_enigma_init_steps(){
             enigma_machine.init_steps = init_steps;
             for (int i = 0; i < 26; ++i){
-                plug_board[i] = -1;
+                plugboard[i].resize(0);
             }
-            char test_letter;
+            int test_letter, target_letter;
+            bool is_letter_match;// at least one letter pass all test //
             for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index){
+                target_letter = *(vec_loops[loop_index].end());
+                is_letter_match = false;
                 for (int letter = 0; letter < 26; ++letter){
                     /* iter letter in loop, if no letter valid in loop, init_step assume wrong */
-                    test_letter = letter;
+                    test_letter = letter;    
                     for (int route_index = 1; route_index < vec_loops[loop_index].size(); route_index+=2){
                         /* The enigma circuit process */
                         /* [route_index] = letter, [route_index + 1] = step */
                         test_letter = enigma_machine.single_enigma_calculate(vec_loops[loop_index][route_index], test_letter);
                     }
-                    if(test_letter == *(vec_loops[loop_index].end()-1)){
+                    if(test_letter == letter){
                         //init_step first check valid, need plug board check
-                        if((plug_board[letter] == -1) || (plug_board[test_letter] == -1)){
-                            // plug board conflict, wrong init_step set
-                            continue;
-                        }
-                        plug_board[letter] = test_letter;
-                        plug_board[test_letter] = letter;
+                        is_letter_match = true;
+                        plugboard[letter].push_back(target_letter);
+                        plugboard[target_letter].push_back(letter);
+                    }
+                }
+                if(!is_letter_match){
+                    /* if any one of loop has no letter match, means that the init_step set is wrong. */
+                    return false;
+                }
+            }
+            /* check if plugboard is valid */
+            bool used_plug_table[26];
+            for (int i = 0; i < 26; i++)
+                used_plug_table[i] = false;
+            bool is_any_set_valid;
+            for (int i = 0; i < 26; ++i){
+                if(plugboard[i].empty())
+                    continue;
+                is_any_set_valid = false;
+                for (int k = 0; k < plugboard[i].size(); ++k){
+                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][k]])){
+                        /* if both of them are false */
+                        used_plug_table[i] = used_plug_table[plugboard[i][k]] = true;
+                        continue;
                     }
                 }
             }
