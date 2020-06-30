@@ -22,16 +22,26 @@ class bombe_rotor{
         void find_loops(){
 
         }
-        void sort_loop(vector<int> loop){
+        vector<int> sort_loop(const vector<int> &loop){
             int min_num = loop[0], min_index = 0;
+            vector<int> new_loop;
             for (int i = 2; i < loop.size(); i+=2){
                 if(loop[i] < min_num){
                     min_num = loop[i];
                     min_index = i;
                 }
             }
-
+            if(min_index == 0)
+                return loop;
+            new_loop.assign(loop.begin() + min_index, loop.end());
+            new_loop.insert(new_loop.end() ,loop.begin() + 1, loop.begin() + min_index +1);
+            for (int i = 0; i < new_loop.size(); ++i){
+                cout << new_loop[i] << " ";
+            }
+            cout << endl;
+            return new_loop;
         }
+
 
 };
 
