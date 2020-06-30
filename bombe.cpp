@@ -33,17 +33,38 @@ class bombe_rotor{
                 remain_letters[i] = i;
             }
             vec_process.assign(1, {0});
-            while(!vec_process.empty())
+            while(!vec_process.empty()){
                 for (int i = 0; i < vec_process.size(); ++i){
                     letter_index = *vec_process.at(i).rbegin();
                     process = vec_process.at(i);
                     menu_ptr = &bombe_menu[letter_index];
-                    vec_process.at(i).push_back(menu_ptr[0][0]);
-                    vec_process.at(i).push_back(menu_ptr[0][1]);
-                    for (int route = 1; route < bombe_menu[letter_index].size(); ++route){
-                        process.push_back(bombe_menu)
+                    vec_process.at(i).push_back((*menu_ptr)[0][0]);
+                    vec_process.at(i).push_back((*menu_ptr)[0][1]);
+                    for (int route = 1; route < (*menu_ptr).size(); ++route){
+                        process.push_back((*menu_ptr)[route][0]);
+                        process.push_back((*menu_ptr)[route][1]);
+                        if(is_value_exists(letter_index, process)){
+                            // find closed loop, append into vec_loops, remove the base process from vec_process.
+                            vec_loops.push_back(vector<int>(process.begin() + i, process.end()));
+                            vec_process.erase(vec_process.begin() + i);
+                            --i;
+                        }else{
+                            // not form closed loop yet, append into vec_process and keep trying.
+                            vec_process.push_back(process);
+                        }
+
                     }
                 }
+                
+            }
+        }
+        int is_value_exists(int value, const vector<int> &loop){
+            for (int i = 0; i < loop.size(); i+=2){
+                /* check every letter value, not steps value */
+                if(value == loop[i])
+                    return i;
+            }
+            return -1;
         }
         bool is_loop_exists(const vector<int> &loop){
             /* This function will compare in the vec_loops */
