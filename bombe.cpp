@@ -16,7 +16,7 @@ class bombe_rotor{
         bool test_finished;
         /* selected_rotors_index, init_step store enigma setting */
         vector<int> remain_letters, selected_rotors_index, init_steps, plugboard[26];
-        vector<array<vector<int>, 26>> plugboard_possibilities;
+        vector<array<int, 26>> plugboard_possibilities;
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
         static vector<string> vec_plain, vec_cipher;
@@ -60,22 +60,75 @@ class bombe_rotor{
                 used_plug_table[i] = false;
             bool is_any_set_valid;
             for (int i = 0; i < 26; ++i){
+                // iter all plug of letter
                 if(plugboard[i].empty())
                     continue;
                 if(plugboard[i].size() == 1){
                     is_any_set_valid = false;
-                    for (int k = 0; k < plugboard[i].size(); ++k){
-                        if(!(used_plug_table[i] || used_plug_table[plugboard[i][k]])){
-                            /* if both of them are false */
-                            is_any_set_valid = true;
-                            used_plug_table[i] = used_plug_table[plugboard[i][k]] = true; 
-                        }else{ // the only possible plug (certain one) conflict, means init_step set is wrong.
-                            return false;
+                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][0]])){
+                        /* if both of them are false */
+                        is_any_set_valid = true;
+                        used_plug_table[i] = used_plug_table[plugboard[i][0]] = true; 
+                    }else{ // the only possible plug (certain one) conflict, means init_step set is wrong.
+                        return false;
+                    }
+                }
+            }
+            /* do whole possibilities check by span all */
+            int base_arr[26];
+            fill_n(base_arr, 26, -1);
+            for (int i = 0; i < 26; ++i)
+            { // iter plugboard
+                if (plugboard[i].empty())
+                {
+                    plugboard[i].resize(26);
+                    for (int k = 0; k < 26; ++k)
+                        plugboard[i][k] = k;
+                }
+            }
+            for (int i = 0; i < plugboard[0].size(); ++i){
+                plugboard_possibilities.push_back(array<int, 26>());
+                for (int t = 0; t < 26; ++t)
+                    plugboard_possibilities.at(plugboard_possibilities.size() - 1)[t] = base_arr[t];
+            }
+            int num_of_task = 1;
+            /* Process: remove base_arr, and add new_arr to possibilities */
+            for (int letter = 1; letter < 26; ++letter){
+                for (int pos_index = 0; pos_index < num_of_task; ++pos_index){
+                    num_of_task = plugboard_possibilities.size();
+                    for (int i = 0; i < 26; ++i)// store first possibility to base_arr and process later.
+                        base_arr[i] = plugboard_possibilities[0][i];
+                    plugboard_possibilities.erase(plugboard_possibilities.begin());
+
+                    for (int k = 0; k < plugboard[letter].size(); ++k)
+                    {
+                        base_arr[letter] = plugboard[letter][k];
+                        if (is_plugboard_valid(base_arr))
+                        {
+                            plugboard_possibilities.push_back(array<int, 26>());
+                            for (int t = 0; t < 26; ++t)
+                                plugboard_possibilities.at(plugboard_possibilities.size() - 1)[t] = base_arr[t];
                         }
                     }
                 }
             }
         }
+        bool is_plugboard_valid(int plugboard[26]){
+            /*int bool_table_used[26];
+            for (int i = 0; i < 26; i++){
+                bool_table_used[i] = false;
+            }*/
+            for (int i = 0; i < 26; ++i){
+                if(plugboard[i] == -1)
+                    return true;
+                if(!(plugboard[i]==i)&&!(plugboard[plugboard[i]]==i)){
+                    /* connect each other or itself */
+                    return false;
+                }
+            }
+            return true;
+        }
+
         void add_one_init_step(){
             ++init_steps.at(init_steps.size() - 1);
             for (int i = init_steps.size() -2 ; i >= 0; --i){
@@ -105,7 +158,7 @@ class bombe_rotor{
         void find_loops(){
             remain_letters.resize(25);
             vector<int> process, base_process;
-            vector < array<int, 2>> *menu_ptr;
+            vector<array<int, 2>> *menu_ptr;
             vector<vector<int>> vec_process;
             int letter_index, find_index;
             for (int i = 0; i < 26; ++i){
@@ -215,5 +268,6 @@ int main(){
     }
     br.add_text_to_bombe_menu("WSNPNLKLSTCS", "ATTACKATDAWN");
     br.find_loops();
+
     return 0;
 }
