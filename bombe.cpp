@@ -18,6 +18,7 @@ class bombe_rotor{
         vector<int> remain_letters, selected_rotors_index, init_steps, plugboard[26];
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
+        static vector<string> vec_plain, vec_cipher;
         bool test_enigma_init_steps(){
             enigma_machine.init_steps = init_steps;
             for (int i = 0; i < 26; ++i){
@@ -60,8 +61,8 @@ class bombe_rotor{
                 for (int k = 0; k < plugboard[i].size(); ++k){
                     if(!(used_plug_table[i] || used_plug_table[plugboard[i][k]])){
                         /* if both of them are false */
-                        used_plug_table[i] = used_plug_table[plugboard[i][k]] = true;
-                        continue;
+                        is_any_set_valid = true;
+                        //used_plug_table[i] = used_plug_table[plugboard[i][k]] = true;
                     }
                 }
             }
@@ -83,6 +84,8 @@ class bombe_rotor{
         }
         void add_text_to_bombe_menu(string plain, string cipher){
             // array<int, 2> = {step, letter_index}
+            vec_plain.push_back(plain);
+            vec_cipher.push_back(cipher);
             const char *pptr = plain.c_str();
             const char *cptr = cipher.c_str();
             for (int i = 0; i < plain.size(); ++i){
@@ -193,6 +196,9 @@ class bombe_rotor{
 };
 vector<array<int, 2>> bombe_rotor::bombe_menu[] = {};
 vector<vector<int>> bombe_rotor::vec_loops = vector<vector<int>>();
+vector<string> bombe_rotor::vec_plain = vector<string>();
+vector<string> bombe_rotor::vec_cipher = vector<string>();
+
 int main(){
     bombe_rotor br;
     for (int i = 0; i < 26; ++i){
