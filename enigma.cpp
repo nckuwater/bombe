@@ -64,20 +64,33 @@ bool enigma::load_rotors_configs(string path, string reflector_path){
     num_of_rotors = rotors_set.size();
     return true;
 }
-void enigma::init_steps(){
-    current_steps.assign(num_of_rotors, 0);
+void enigma::select_rotors(vector<int> vec_of_index){
+    selected_rotors_index = vec_of_index;
 }
-char enigma::single_enigma_calculate(int step, char c){
-    int num_of_rotors_set = rotors_set.size();
-    int step_arr[num_of_rotors_set];
-    ++step;
-    for (int i = num_of_rotors_set-1; i >= 0; --i){
-        step_arr[i] = step % 26;
+
+void enigma::set_init_steps(vector<int> init_steps){
+    current_steps = init_steps;
+}
+vector<int> enigma::set_current_steps(int step){
+    /* this function will add step to vector init_steps and store result to vector current_steps */
+    vector<int> result(init_steps);
+    for (int i = init_steps.size(); i >= 0; --i){
+        result[i] += step;
+        if(result[i] > 26){
+            result[i] %= 26;
+        }
         step /= 26;
     }
+    current_steps = result;
+    return result;
+}
+char enigma::single_enigma_calculate(int step, char c){
+    int num_of_rotors_set = num_of_rotors;
+    set_current_steps(++step);
+
     // phase - circuit from right to left
     for (int i = num_of_rotors_set - 1; i >= 0; --i){
-        c = rotors_set[current_rotors_index[i]][(c + step_arr[i]) % 26] - step_arr[i];
+        c = rotors_set[current_rotors_index[i]][(c + current_steps[i]) % 26] - current_steps[i];
         // by exp, test zero is five times faster than add and mod //
         if(c < 0)
             c += 26;
@@ -86,7 +99,7 @@ char enigma::single_enigma_calculate(int step, char c){
     c = reflector_set.at(reflector_index)[static_cast<unsigned char>(c)];
     // phase - circuit from left to right
     for(int i = 0; i < num_of_rotors_set; ++i){
-        c = inverse_rotors_set[current_rotors_index[i]][(c + step_arr[i]) % 26] - step_arr[i];
+        c = inverse_rotors_set[current_rotors_index[i]][(c + current_steps[i]) % 26] - current_steps[i];
         if(c < 0)
             c += 26;
     }
