@@ -11,11 +11,55 @@ using namespace std;
 class bombe_rotor{
     /* each bombe_rotor have one enigma circuit */
     public:
-        enigma enigma_machine();
-        int total_tested_init_steps_set;
-        vector<int> remain_letters;
+        enigma enigma_machine;
+        int total_tested_init_steps_set, plug_board[26];
+        bool test_finished;
+        /* selected_rotors_index, init_step store enigma setting */
+        vector<int> remain_letters, selected_rotors_index, init_steps;
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
+        bool test_enigma_init_steps(){
+            enigma_machine.init_steps = init_steps;
+            for (int i = 0; i < 26; ++i){
+                plug_board[i] = -1;
+            }
+            char test_letter;
+            for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index){
+                for (int letter = 0; letter < 26; ++letter){
+                    /* iter letter in loop, if no letter valid in loop, init_step assume wrong */
+                    test_letter = letter;
+                    for (int route_index = 1; route_index < vec_loops[loop_index].size(); route_index+=2){
+                        /* The enigma circuit process */
+                        /* [route_index] = letter, [route_index + 1] = step */
+                        test_letter = enigma_machine.single_enigma_calculate(vec_loops[loop_index][route_index], test_letter);
+                    }
+                    if(test_letter == *(vec_loops[loop_index].end()-1)){
+                        //init_step first check valid, need plug board check
+                        if((plug_board[letter] == -1) || (plug_board[test_letter] == -1)){
+                            // plug board conflict, wrong init_step set
+                            continue;
+                        }
+                        plug_board[letter] = test_letter;
+                        plug_board[test_letter] = letter;
+                    }
+                }
+            }
+        }
+        void add_one_init_step(){
+            ++init_steps.at(init_steps.size() - 1);
+            for (int i = init_steps.size() -2 ; i >= 0; --i){
+                if(init_steps[i + 1] > 25){
+                    ++init_steps[i];
+                    init_steps[i + 1] -= 26;
+                }else{
+                    break;
+                }
+            }
+            if(init_steps[0] > 25){
+                test_finished = true;
+                init_steps[0] %= 26;
+            }
+        }
         void add_text_to_bombe_menu(string plain, string cipher){
             // array<int, 2> = {step, letter_index}
             const char *pptr = plain.c_str();
@@ -31,19 +75,18 @@ class bombe_rotor{
             vector < array<int, 2>> *menu_ptr;
             vector<vector<int>> vec_process;
             int letter_index, find_index;
-            for (int i = 1; i < 26; ++i){
-                // A is not need to be add
+            for (int i = 0; i < 26; ++i){
                 remain_letters[i] = i;
             }
-            vec_process.assign(1, {0});
-            while(!vec_process.empty()){
-                for (int i = 0; i < vec_process.size(); ++i){
-                    letter_index = (vec_process.at(i).at(vec_process.at(0).size()-1));
+        
+            for(int init_letter = 0; init_letter<26; ++init_letter){
+                vec_process.assign(1, {init_letter});
+                while(!vec_process.empty()){
+                    letter_index = (vec_process.at(0).at(vec_process.at(0).size()-1));
                     menu_ptr = &bombe_menu[letter_index];
-                    base_process = vec_process.at(i);
-                    vec_process.erase(vec_process.begin() + i);
-                    --i;
-                    cout << i << " " << letter_index << endl;
+                    base_process = vec_process.at(0);
+                    vec_process.erase(vec_process.begin());
+                    //cout << "letter index: " << letter_index << endl;
                     //vec_process.at(i).push_back((*menu_ptr)[0][0]);
                     //vec_process.at(i).push_back((*menu_ptr)[0][1]);
                     for (int route = 0; route < (*menu_ptr).size(); ++route){
@@ -52,16 +95,17 @@ class bombe_rotor{
                         process = base_process;
                         process.push_back((*menu_ptr).at(route)[0]);
                         process.push_back((*menu_ptr).at(route)[1]);
-                        for (int j = 0; j < process.size(); j+=2){
+                        /*for (int j = 0; j < process.size(); j+=2){
                             cout << static_cast<char>(process[j] + 65) << " : " << process[j] << endl;
-                        }
+                        }*/
                         find_index = is_value_exists((*menu_ptr)[route][1], process);
                         if (find_index != -1)
                         {
                             // find closed loop, append into vec_loops.
+                            process.assign(process.begin() + find_index, process.end());
                             process = sort_loop(process);
                             if(!is_loop_exists(process))
-                                vec_loops.push_back(vector<int>(process.begin() + find_index, process.end()));
+                                vec_loops.push_back(process);
                         }
                         else
                         {
@@ -69,7 +113,7 @@ class bombe_rotor{
                             vec_process.push_back(process);
                         }
                     }
-                }                
+                }
             }
             for (int i = 0; i < vec_loops.size(); ++i){
                 for (int k = 0; k < vec_loops[i].size(); ++k){
@@ -108,12 +152,16 @@ class bombe_rotor{
                     min_index = i;
                 }
             }
-            if(min_index == 0)
-                return loop;
-            new_loop.assign(loop.begin() + min_index, loop.end());
-            new_loop.insert(new_loop.end() ,loop.begin() + 1, loop.begin() + min_index +1);
-            if(new_loop[1] > *(new_loop.end()-2))
+            if(min_index != 0){
+                new_loop.assign(loop.begin() + min_index, loop.end());
+                new_loop.insert(new_loop.end() ,loop.begin() + 1, loop.begin() + min_index +1);
+            }
+            else{
+                new_loop = loop;
+            }
+            if(new_loop[1] > *(new_loop.end()-2)){
                 reverse(new_loop.begin(), new_loop.end());
+            }
             /*for (int i = 0; i < new_loop.size(); ++i){
                 cout << new_loop[i] << " ";
             }

@@ -102,8 +102,7 @@ void enigma::add_one_step(){
 }
 char enigma::single_enigma_calculate(int step, char c){
     int num_of_selected_rotors = selected_rotors_index.size();
-    //set_current_steps(++step);
-    add_one_step();
+    set_current_steps(++step);
     // phase - circuit from right to left
     for (int i = num_of_selected_rotors - 1; i >= 0; --i){
         c = rotors_set[selected_rotors_index[i]][(c + current_steps[i]) % 26] - current_steps[i];
