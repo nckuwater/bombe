@@ -47,7 +47,7 @@ class bombe_rotor{
                     for (int route_index = 1; route_index < vec_loops[loop_index].size(); route_index += 2)
                     {
                         /* The enigma circuit process */
-                        /* [route_index] = letter, [route_index + 1] = step */
+                        /* [route_index -1] = letter, [route_index] = step */
                         test_letter = enigma_machine.single_enigma_calculate(vec_loops[loop_index][route_index], test_letter);
                     }
                     
@@ -64,23 +64,36 @@ class bombe_rotor{
                         //cout << "test" << endl;
                     }
                     else{
-                    //cout << "not match" << endl;
+                        //cout << "not match" << endl;
                     }
                 }
                 if(!is_letter_match){
                     /* if any one of loop has no letter match, means that the init_step set is wrong. */
-                    cout << "no letter match" << endl;
+                    cout << "no letter match for one of loops" << endl;
                     return false;
                 }
                 if(num_of_match_letter == 1){//confirm case
-                    if(!connect_plugboard(confirmed_plugs, target_letter, last_letter))
+                    if(!connect_plugboard(confirmed_plugs, target_letter, last_letter)){
+                        cout << "confirmed_plug detect conflict" << endl;
                         return false;
+                    }
                     //confirmed_plugs[target_letter] = true;
                     //confirmed_plugs[last_letter] = true;
-                    plugboard[target_letter].erase(plugboard[target_letter].begin(), plugboard[target_letter].end() - 1);
-                    plugboard[last_letter].erase(plugboard[last_letter].begin(), plugboard[last_letter].end() - 1);
+                    //plugboard[target_letter].erase(plugboard[target_letter].begin(), plugboard[target_letter].end() - 1);
+                    //plugboard[last_letter].erase(plugboard[last_letter].begin(), plugboard[last_letter].end() - 1);
+                    plugboard[target_letter] = vector<int>(1, last_letter);
+                    plugboard[last_letter] = vector<int>(1, target_letter);
                 }
             }
+            cout << "confirmed plugs:" << endl;
+            for (int i = 0; i < 26; ++i){
+                cout << confirmed_plugs[i] << " ";
+                if(confirmed_plugs[i] != -1){
+                    plugboard[i] = vector<int>(1, confirmed_plugs[i]);
+                    plugboard[confirmed_plugs[i]] = vector<int>(1, i);
+                }
+            }
+            cout << endl;
             /* check if plugboard is valid */
             /* 
                 because if only one possibility match, it must be the right one,
@@ -113,6 +126,7 @@ class bombe_rotor{
             { // iter plugboard, replace empty by A~Z
                 if (plugboard[i].empty())
                 {
+                    cout << "ADDDD" << endl;
                     plugboard[i].resize(26);
                     for (int k = 0; k < 26; ++k)
                         plugboard[i][k] = k;
