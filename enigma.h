@@ -1,3 +1,6 @@
+#ifndef ENIGMA_H
+#define ENIGMA_H
+
 #include <iostream>
 #include <cstdint>
 #include <vector>
@@ -26,3 +29,4 @@ class enigma{
         void printChar(char num);
         void print_vec(vector<int> vec);
 };
+#endif

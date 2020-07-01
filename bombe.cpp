@@ -3,6 +3,7 @@
 #include <array>
 #include <fstream>
 #include <algorithm>
+#include <iomanip>
 #include "enigma.h"
 
 using namespace std;
@@ -20,35 +21,64 @@ class bombe_rotor{
         static vector<array<int, 2>> bombe_menu[26];
         static vector<vector<int>> vec_loops;
         static vector<string> vec_plain, vec_cipher;
+        bombe_rotor() : enigma_machine(){
+
+        }
         bool test_enigma_init_steps(){
+            
             /* This test should be call after set init_step */
             enigma_machine.init_steps = init_steps;
             for (int i = 0; i < 26; ++i){
                 plugboard[i].resize(0);
             }
-            int test_letter, target_letter;
+            int test_letter, target_letter, num_of_match_letter, last_letter;// last_letter is for confirm_case record
             bool is_letter_match;// at least one letter pass all test //
-            for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index){
-                target_letter = *(vec_loops[loop_index].end());
+            array<int, 26> confirmed_plugs;
+            confirmed_plugs.fill(-1);
+            for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index)
+            {
+                target_letter = vec_loops[loop_index][0];
                 is_letter_match = false;
-                for (int letter = 0; letter < 26; ++letter){
+                num_of_match_letter = 0;
+                for (int letter = 0; letter < 26; ++letter)
+                {
                     /* iter letter in loop, if no letter valid in loop, init_step assume wrong */
-                    test_letter = letter;    
-                    for (int route_index = 1; route_index < vec_loops[loop_index].size(); route_index+=2){
+                    test_letter = letter;
+                    for (int route_index = 1; route_index < vec_loops[loop_index].size(); route_index += 2)
+                    {
                         /* The enigma circuit process */
                         /* [route_index] = letter, [route_index + 1] = step */
                         test_letter = enigma_machine.single_enigma_calculate(vec_loops[loop_index][route_index], test_letter);
                     }
-                    if(test_letter == letter){
+                    
+                    if (test_letter == letter)
+                    {
                         //init_step first check valid, need plug board check
                         is_letter_match = true;
-                        plugboard[letter].push_back(target_letter);
-                        plugboard[target_letter].push_back(letter);
+                        ++num_of_match_letter;
+                        if (!is_value_in_vec(plugboard[letter], target_letter))
+                            plugboard[letter].push_back(target_letter);
+                        if (!is_value_in_vec(plugboard[target_letter], letter))
+                            plugboard[target_letter].push_back(letter);
+                        last_letter = letter;
+                        //cout << "test" << endl;
+                    }
+                    else{
+                    //cout << "not match" << endl;
                     }
                 }
                 if(!is_letter_match){
                     /* if any one of loop has no letter match, means that the init_step set is wrong. */
+                    cout << "no letter match" << endl;
                     return false;
+                }
+                if(num_of_match_letter == 1){//confirm case
+                    if(!connect_plugboard(confirmed_plugs, target_letter, last_letter))
+                        return false;
+                    //confirmed_plugs[target_letter] = true;
+                    //confirmed_plugs[last_letter] = true;
+                    plugboard[target_letter].erase(plugboard[target_letter].begin(), plugboard[target_letter].end() - 1);
+                    plugboard[last_letter].erase(plugboard[last_letter].begin(), plugboard[last_letter].end() - 1);
                 }
             }
             /* check if plugboard is valid */
@@ -56,7 +86,8 @@ class bombe_rotor{
                 because if only one possibility match, it must be the right one,
                 if it conflict with other, means that the init_step set is wrong.
             */
-            bool used_plug_table[26];
+            cout << "checking first conflict" << endl;
+            /*bool used_plug_table[26];
             for (int i = 0; i < 26; i++)
                 used_plug_table[i] = false;
             bool is_any_set_valid;
@@ -64,17 +95,19 @@ class bombe_rotor{
                 // iter all plug of letter
                 if(plugboard[i].empty())
                     continue;
-                if(plugboard[i].size() == 1){
+                if(plugboard[i].size() == 1 && !used_plug_table[i]){
                     is_any_set_valid = false;
-                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][0]])){
+                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][0]])){*/
                         /* if both of them are false */
-                        is_any_set_valid = true;
-                        used_plug_table[i] = used_plug_table[plugboard[i][0]] = true; 
+                        /*is_any_set_valid = true;
+                        used_plug_table[i] = used_plug_table[plugboard[i][0]] = true;
                     }else{ // the only possible plug (certain one) conflict, means init_step set is wrong.
+                        cout << "first conflict check fail" << endl;
                         return false;
                     }
                 }
-            }
+            }*/
+            cout << "spanning possibilities" << endl;
             /* do whole possibilities check by span all */
             for (int i = 0; i < 26; ++i)
             { // iter plugboard, replace empty by A~Z
@@ -85,39 +118,105 @@ class bombe_rotor{
                         plugboard[i][k] = k;
                 }
             }
-            array<int, 26> base_arr;
-            fill_n(base_arr, 26, -1);
+            for (int i = 0; i < 26; ++i){
+                cout << i << " psize " << plugboard[i].size() << endl;
+                print_vec(plugboard[i]);
+            }
+            cout << endl;
+            array<int, 26> base_arr, try_arr;
+            base_arr.fill(-1);
             // set letter A possibility to be the init.
             plugboard_possibilities.assign(plugboard[0].size(), array<int, 26>());
             for (int i = 0; i < plugboard[0].size(); ++i){
-                plugboard_possibilities[i] = base_arr;
+                arrcpy(plugboard_possibilities[i], base_arr);
                 connect_plugboard(plugboard_possibilities[i], 0, plugboard[0][i]);
             }
-            int num_of_task = 1;
+            int num_of_task = plugboard_possibilities.size();
             /* Process: remove base_arr, and add new_arr to possibilities */
             for (int letter = 1; letter < 26; ++letter){
-                for (int pos_index = 0; pos_index < num_of_task; ++pos_index){
-                    num_of_task = plugboard_possibilities.size();
-                    for (int i = 0; i < 26; ++i)// store first possibility to base_arr and process later.
-                        base_arr[i] = plugboard_possibilities[0][i];
+                cout << "tasks: " << num_of_task << endl;
+                num_of_task = plugboard_possibilities.size();
+                // tasks are those process with same connected plugs
+                for (int task_index = 0; task_index < num_of_task; ++task_index){
+                    //cout << "task_index: " << task_index << endl;
+                    // store first possibility to base_arr and process later.
+                    // base_arr now have define letter-1 plugs
+                    arrcpy(base_arr, plugboard_possibilities[0]);
+                    //print_arr(base_arr);
                     plugboard_possibilities.erase(plugboard_possibilities.begin());
-
                     for (int k = 0; k < plugboard[letter].size(); ++k)
                     {
-                        base_arr[letter] = plugboard[letter][k];
-                        if (is_plugboard_valid(base_arr.array()))
-                        {
+                        //base_arr[letter] = plugboard[letter][k];
+                        /*if(plugboard[letter][k] == -1){
+                            connect_plugboard(base_arr, letter, plugboard[letter][k]);
+                        }
+                        if (is_plugboard_valid(base_arr.data())){
                             plugboard_possibilities.push_back(array<int, 26>());
-                            for (int t = 0; t < 26; ++t)
-                                plugboard_possibilities.at(plugboard_possibilities.size() - 1)[t] = base_arr[t];
+                            plugboard_possibilities[plugboard_possibilities.size() - 1] = base_arr;
+                        }*/
+                        arrcpy(try_arr, base_arr);
+                        if(connect_plugboard(try_arr, letter, plugboard[letter][k])){
+                            plugboard_possibilities.push_back(array<int, 26>());
+                            arrcpy(plugboard_possibilities[plugboard_possibilities.size() - 1], try_arr);
+                            //cout << "try_arr " << letter << ":" << plugboard[letter][k] << endl;
+                            //print_arr(try_arr);
+                        }
+                        else{
+                            
                         }
                     }
                 }
             }
+            cout << "plugboard final print" << endl;
+            print_plugboard_possibilities(plugboard_possibilities);
+            /* brute test all possibilities */
+            return true;
         }
-        inline void connect_plugboard(array<int, 26> &arr, const int &a, const int &b){
-            arr[a] = b;
-            arr[b] = a;
+        inline void arrcpy(array<int, 26> &a, const array<int, 26> &b){
+            for (int i = 0; i < 26; ++i)
+                a[i] = b[i];
+        }
+        inline bool connect_plugboard(array<int, 26> &arr, const int &a, const int &b){
+            if(a!=b){
+                if((arr[a] == -1) && (arr[b] == -1)){
+                    arr[a] = b;
+                    arr[b] = a;
+                    return true;
+                }
+                if((arr[a]==b) && (arr[b]==a))
+                    return true;
+                return false;
+            }
+            else{
+                if(arr[a] == a){
+                    return true;
+                }
+                if(arr[a] == -1){
+                    arr[a] = a;
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
+        inline bool is_value_in_vec(const vector<int> &vec, const int &num){
+            for (int i = 0; i < vec.size(); ++i){
+                if(vec[i] == num)
+                    return true;
+            }
+            return false;
+        }
+        inline void print_vec(const vector<int> &vec){
+            for (int i = 0; i < vec.size(); ++i){
+                cout << vec[i] << " ";
+            }
+            cout << endl;
+        }
+        inline void print_arr(const array<int, 26> &arr){
+            for (int i = 0; i < 26;++i){
+                cout << setw(2) << arr[i] << " ";
+            }
+            cout << endl;
         }
         bool is_plugboard_valid(int plugboard[26]){
             /*int bool_table_used[26];
@@ -127,12 +226,20 @@ class bombe_rotor{
             for (int i = 0; i < 26; ++i){
                 if(plugboard[i] == -1)
                     return true;
-                if(!(plugboard[i]==i)&&!(plugboard[plugboard[i]]==i)){
+                if((plugboard[i]!=i)||(plugboard[plugboard[i]]!=i)){
                     /* connect each other or itself */
                     return false;
                 }
             }
             return true;
+        }
+        inline void print_plugboard_possibilities(const vector<array<int, 26>> &pb){
+            for (int i = 0; i<pb.size(); ++i){
+                for (int k = 0; k < 26; ++k){
+                    cout << pb[i][k] << "-" << pb[i][k] << " ";
+                }
+                cout << endl;
+            }
         }
 
         void add_one_init_step(){
@@ -220,6 +327,7 @@ class bombe_rotor{
             }
         }
         int is_value_exists(int value, const vector<int> &loop){
+            /* equal to index function, return -1 if none match value */
             for (int i = 0; i < loop.size()-1; i+=2){
                 /* check every letter value, not steps value */
                 if(value == loop[i])
@@ -238,7 +346,7 @@ class bombe_rotor{
         vector<int> sort_loop(const vector<int> &loop){
             int min_num = loop[0], min_index = 0;
             vector<int> new_loop;
-            for (int i = 2; i < loop.size(); i+=2){
+            /*for (int i = 2; i < loop.size(); i+=2){
                 if(loop[i] < min_num){
                     min_num = loop[i];
                     min_index = i;
@@ -250,7 +358,8 @@ class bombe_rotor{
             }
             else{
                 new_loop = loop;
-            }
+            }*/
+            new_loop = loop;
             if(new_loop[1] > *(new_loop.end()-2)){
                 reverse(new_loop.begin(), new_loop.end());
             }
@@ -272,8 +381,15 @@ int main(){
     for (int i = 0; i < 26; ++i){
         br.bombe_menu[i] = vector<array<int, 2>>(0);
     }
-    br.add_text_to_bombe_menu("WSNPNLKLSTCS", "ATTACKATDAWN");
+    br.add_text_to_bombe_menu("HELLOWORLD", "ILBDAAMTAZ");
+    br.add_text_to_bombe_menu("WORLDWARTWO", "KIXDIACTHJL");
+    br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
+    //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
     br.find_loops();
+    br.enigma_machine.load_rotors_configs();
+    br.enigma_machine.selected_rotors_index = {0, 1, 2};
+    br.init_steps = {0, 0, 0};
+    br.test_enigma_init_steps();
 
     return 0;
 }

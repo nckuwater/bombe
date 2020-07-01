@@ -109,11 +109,14 @@ char enigma::single_enigma_calculate(int step, char c){
         // by exp, test zero is five times faster than add and mod //
         if(c < 0)
             c += 26;
+        
     }
     // phase - reflect
+    
     c = reflector_set.at(reflector_index)[static_cast<unsigned char>(c)];
     // phase - circuit from left to right
     for(int i = 0; i < num_of_selected_rotors; ++i){
+        
         c = inverse_rotors_set[selected_rotors_index[i]][(c + current_steps[i]) % 26] - current_steps[i];
         if(c < 0)
             c += 26;
@@ -143,7 +146,7 @@ void enigma::print_vec(vector<int> vec){
 }
 
 
-int main(){
+/*int main(){
     enigma e;
     e.load_rotors_configs();
     vector<int> selected_rotors({ 0, 1, 2 });
@@ -151,4 +154,4 @@ int main(){
     e.set_init_steps(vector<int>({0, 0, 0}));
     cout << e.string_enigma_calculate("HELLO") << endl;
     return 0;
-}
+}*/
