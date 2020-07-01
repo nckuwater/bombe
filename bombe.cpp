@@ -21,6 +21,7 @@ class bombe_rotor{
         static vector<vector<int>> vec_loops;
         static vector<string> vec_plain, vec_cipher;
         bool test_enigma_init_steps(){
+            /* This test should be call after set init_step */
             enigma_machine.init_steps = init_steps;
             for (int i = 0; i < 26; ++i){
                 plugboard[i].resize(0);
@@ -75,10 +76,8 @@ class bombe_rotor{
                 }
             }
             /* do whole possibilities check by span all */
-            int base_arr[26];
-            fill_n(base_arr, 26, -1);
             for (int i = 0; i < 26; ++i)
-            { // iter plugboard
+            { // iter plugboard, replace empty by A~Z
                 if (plugboard[i].empty())
                 {
                     plugboard[i].resize(26);
@@ -86,10 +85,13 @@ class bombe_rotor{
                         plugboard[i][k] = k;
                 }
             }
+            array<int, 26> base_arr;
+            fill_n(base_arr, 26, -1);
+            // set letter A possibility to be the init.
+            plugboard_possibilities.assign(plugboard[0].size(), array<int, 26>());
             for (int i = 0; i < plugboard[0].size(); ++i){
-                plugboard_possibilities.push_back(array<int, 26>());
-                for (int t = 0; t < 26; ++t)
-                    plugboard_possibilities.at(plugboard_possibilities.size() - 1)[t] = base_arr[t];
+                plugboard_possibilities[i] = base_arr;
+                connect_plugboard(plugboard_possibilities[i], 0, plugboard[0][i]);
             }
             int num_of_task = 1;
             /* Process: remove base_arr, and add new_arr to possibilities */
@@ -103,7 +105,7 @@ class bombe_rotor{
                     for (int k = 0; k < plugboard[letter].size(); ++k)
                     {
                         base_arr[letter] = plugboard[letter][k];
-                        if (is_plugboard_valid(base_arr))
+                        if (is_plugboard_valid(base_arr.array()))
                         {
                             plugboard_possibilities.push_back(array<int, 26>());
                             for (int t = 0; t < 26; ++t)
@@ -112,6 +114,10 @@ class bombe_rotor{
                     }
                 }
             }
+        }
+        inline void connect_plugboard(array<int, 26> &arr, const int &a, const int &b){
+            arr[a] = b;
+            arr[b] = a;
         }
         bool is_plugboard_valid(int plugboard[26]){
             /*int bool_table_used[26];
