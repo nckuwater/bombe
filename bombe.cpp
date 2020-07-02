@@ -25,6 +25,10 @@ class bombe_rotor{
         bombe_rotor() : enigma_machine(){
 
         }
+        /* Basic data operations */
+        /* Basic output operations */
+        /* Find loop functions */
+        /* Combine plugboard funtions */
         bool test_enigma_init_steps(){
             /* This test should be call after set init_step */
             enigma_machine.init_steps = init_steps;

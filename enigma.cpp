@@ -134,8 +134,8 @@ char enigma::single_enigma_calculate(int step, char c){
 string enigma::string_enigma_calculate(string plain){
     string cipher;
     cipher = plugboard_convert(cipher);
-    cout << "plain : " << endl
-         << plain << endl;
+    /*cout << "plain : " << endl
+         << plain << endl;*/
     for (int i = 0; i < plain.size(); ++i){
         //cipher += static_cast<char>(single_enigma_calculate( i, plain[i]-65) + 65);
         cipher += static_cast<char>(single_enigma_calculate( i, plain[i]-65) + 65);
