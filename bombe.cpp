@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <iomanip>
+#include <cstdlib>
 #include "enigma.h"
 
 using namespace std;
@@ -34,6 +35,8 @@ class bombe_rotor{
             bool is_letter_match;// at least one letter pass all test //
             array<int, 26> confirmed_plugs;
             confirmed_plugs.fill(-1);
+            array<int, 26> minimum_founded_possibilitiy_for_plug;// one of the reduce method, record the minimum possibility of loops.
+            minimum_founded_possibilitiy_for_plug.fill(26);
             for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index)
             {
                 cout << loop_index << endl;
@@ -57,8 +60,8 @@ class bombe_rotor{
                         //init_step first check valid, need plug board check
                         is_letter_match = true;
                         ++num_of_match_letter;
-                        if (!is_value_in_vec(plugboard[letter], target_letter))
-                            plugboard[letter].push_back(target_letter);
+                        /*if (!is_value_in_vec(plugboard[letter], target_letter))
+                            plugboard[letter].push_back(target_letter);*/
                         if (!is_value_in_vec(plugboard[target_letter], letter))
                             plugboard[target_letter].push_back(letter);
                         last_letter = letter;
@@ -84,6 +87,9 @@ class bombe_rotor{
                     //plugboard[last_letter].erase(plugboard[last_letter].begin(), plugboard[last_letter].end() - 1);
                     //plugboard[target_letter].assign(1, last_letter);
                     //plugboard[last_letter].assign(1, target_letter);
+                }else if(num_of_match_letter<minimum_founded_possibilitiy_for_plug[target_letter]){
+                    minimum_founded_possibilitiy_for_plug[target_letter] = num_of_match_letter;
+                    plugboard[target_letter].erase(plugboard[target_letter].end() - num_of_match_letter, plugboard[target_letter].end());
                 }
             }
             cout << "confirmed plugs:" << endl;
@@ -99,12 +105,12 @@ class bombe_rotor{
                             temp_index = is_value_exists_full_check(i, plugboard[k]);
                             if(temp_index!=-1 && k!=i && k!=confirmed_plugs[i]){
                                 plugboard[k].erase(plugboard[k].begin() + temp_index);
-                                cout << endl << "delete: " << i << " " << k << endl;
+                                //cout << endl << "delete: " << i << " " << k << endl;
                             }
                             
                             temp_index = is_value_exists_full_check(confirmed_plugs[i], plugboard[k]);
                             if(temp_index!=-1 && k!=i && k!=confirmed_plugs[i]){
-                                cout << "delete: " << i << " " << k << endl;
+                                //cout << "delete: " << i << " " << k << endl;
                                 plugboard[k].erase(plugboard[k].begin() + temp_index);
                             }
                         }
@@ -165,6 +171,7 @@ class bombe_rotor{
                 connect_plugboard(plugboard_possibilities[i], 0, plugboard[0][i]);
             }
             int num_of_task = plugboard_possibilities.size();
+
             /* Process: remove base_arr, and add new_arr to possibilities */
             for (int letter = 1; letter < 26; ++letter){
                 cout << "tasks: " << num_of_task << endl;
@@ -246,6 +253,17 @@ class bombe_rotor{
         inline void print_vec(const vector<int> &vec){
             for (int i = 0; i < vec.size(); ++i){
                 cout << vec[i] << " ";
+            }
+            cout << endl;
+        }
+        inline void print_loop(const vector<int> &loop){
+            for (int i = 0; i < loop.size(); ++i){
+                if(i%2==0){
+                    cout << static_cast<char>(loop[i] + 65);
+                }else{
+                    cout << loop[i];
+                }
+                cout << " ";
             }
             cout << endl;
         }
@@ -347,7 +365,8 @@ class bombe_rotor{
                         else
                         {
                             // not form closed loop yet, append into vec_process and keep trying.
-                            vec_process.push_back(process);
+                            if(process.size()<=12)
+                                vec_process.push_back(process);
                         }
                     }
                 }
@@ -367,6 +386,9 @@ class bombe_rotor{
                 }
                 cout << endl;
             }
+        }
+        void reduce_vec_process(vector<vector<int>> &vec_process){
+            /* goal: sort process and remove the same process */
         }
         void reorganize_loops(){
             /* 
@@ -420,14 +442,49 @@ class bombe_rotor{
                     }
                 }
             }
-            for (int i = 0; i<vec_loops.size(); ++i){
-                if(arr_loop_for_head_letter[vec_loops[i][0]]>=5){
+            vector<vector<vector<int>>> vec_loops_for_letter(26);
+            vector<int> temp_swap;
+            for (int i = 0; i < vec_loops.size(); ++i){
+                vec_loops_for_letter[vec_loops[i][0]].push_back(vec_loops[i]);
+            }
+            for (int i = 0; i < 26; ++i){
+                for (int k = vec_loops_for_letter[i].size() - 1; k >= 0; --k)
+                {
+                    for (int j = 0; j < k; ++j){
+                        if(vec_loops_for_letter[i][j].size()<vec_loops_for_letter[i][j+1].size()){
+                            temp_swap = vec_loops_for_letter[i][j];
+                            vec_loops_for_letter[i][j] = vec_loops_for_letter[i][j + 1];
+                            vec_loops_for_letter[i][j + 1] = temp_swap;
+                        }
+                    }
+                }
+            }
+            vec_loops.resize(0);
+            for (int i = 0; i < 26; ++i){
+                vec_loops.insert(vec_loops.end(), vec_loops_for_letter[i].begin(), vec_loops_for_letter[i].end());
+            }
+
+            for (int i = 0; i < vec_loops.size(); ++i)
+            {
+                if (arr_loop_for_head_letter[vec_loops[i][0]] >= 10)
+                {
                     vec_loops.erase(vec_loops.begin() + i);
                     --i;
                 }
                 ++arr_loop_for_head_letter[vec_loops[i][0]];
             }
+            /* may need to find a path for unloop letter to connet to those loops */
+            cout << "num of loop for each letter after organize process." << endl;
+            for (int i = 0; i < 26; ++i){
+                cout << static_cast<char>(i + 65) << " : " << arr_loop_for_head_letter[i] << " ";
+            }
+            for (int i = 0; i < vec_loops.size(); ++i){
+                cout << "loop " << i << endl;
+                print_loop(vec_loops[i]);
+            }
+                cout << endl;
         }
+
         int is_letter_exists_in_loop(int value, const vector<int> &loop){
             /* This is a function for loop, not universal */
             /* equal to index function, return -1 if none match value */
@@ -510,6 +567,7 @@ int main(){
     br.add_text_to_bombe_menu("HELLOWORLD", "ILBDAAMTAZ");
     br.add_text_to_bombe_menu("WORLDWARTWO", "KIXDIACTHJL");
     br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
+    br.add_text_to_bombe_menu("ADDITIONALMSG", "BAJQXLMMLPTAH");
     //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
     br.find_loops();
     br.reorganize_loops();
