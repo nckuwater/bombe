@@ -25,7 +25,6 @@ class bombe_rotor{
 
         }
         bool test_enigma_init_steps(){
-            
             /* This test should be call after set init_step */
             enigma_machine.init_steps = init_steps;
             for (int i = 0; i < 26; ++i){
@@ -37,6 +36,7 @@ class bombe_rotor{
             confirmed_plugs.fill(-1);
             for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index)
             {
+                cout << loop_index << endl;
                 target_letter = vec_loops[loop_index][0];
                 //cout << "TLL: " << target_letter << endl;
                 is_letter_match = false;
@@ -301,7 +301,7 @@ class bombe_rotor{
             }
         }
         void find_loops(){
-            remain_letters.resize(25);
+            remain_letters.resize(26);
             vector<int> process, base_process;
             vector<array<int, 2>> *menu_ptr;
             vector<vector<int>> vec_process;
@@ -346,12 +346,6 @@ class bombe_rotor{
                     }
                 }
             }
-            array<int, 26> no_loop_letters;
-            no_loop_letters.fill(true);
-            for (int i = 0; i < vec_loops.size(); ++i){
-                if(no_loop_letters[i])
-                    no_loop_letters[i] = false;
-            }
 
             for (int i = 0; i < vec_loops.size(); ++i)
             {
@@ -362,10 +356,37 @@ class bombe_rotor{
                         cout << static_cast<char>(vec_loops[i][k] + 65) << " ";
                     }
                     else{
-                    cout << vec_loops[i][k] << " ";
+                        cout << vec_loops[i][k] << " ";
                     }
                 }
                 cout << endl;
+            }
+        }
+        void reorganize_loops(){
+            /* 
+                due to the plugboard relationship will all relative to the head letter of the loop 
+                this function's goal is to make loops for every letter to make maximum data usage and the minimum possibilities try cost.
+            */
+            array<bool, 26> bool_letters_with_loop, all_letter_in_loop;
+            bool_letters_with_loop.fill(false);
+            all_letter_in_loop.fill(false);
+            for (int i = 0; i < vec_loops.size(); ++i){
+                bool_letters_with_loop[vec_loops[i][0]] = true;
+                for (int k = 0; k < vec_loops[i].size(); ++k){
+                    all_letter_in_loop[vec_loops[i][k]] = true;
+                }
+            }
+            cout << "reorganize_loops" << endl;
+            for (int i = 0; i < 26; ++i){
+                if(bool_letters_with_loop[i]){
+                    cout << static_cast<char>(i + 65) << " " << endl;
+                }
+            }
+            cout << "all letter in loop" << endl;
+            for (int i = 0; i < 26; ++i){
+                if(all_letter_in_loop[i]){
+                    cout << static_cast<char>(i + 65) << " " << endl;
+                }
             }
         }
         int is_letter_exists_in_loop(int value, const vector<int> &loop){
@@ -451,10 +472,11 @@ int main(){
     br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
     //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
     br.find_loops();
+    cout << "find finished" << endl;
     br.enigma_machine.load_rotors_configs();
     br.enigma_machine.selected_rotors_index = {0, 1, 2};
     br.init_steps = {0, 0, 0};
     br.test_enigma_init_steps();
-
+    //br.reorganize_loops();
     return 0;
 }
