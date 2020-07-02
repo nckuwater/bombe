@@ -126,27 +126,6 @@ class bombe_rotor{
                 because if only one possibility match, it must be the right one,
                 if it conflict with other, means that the init_step set is wrong.
             */
-            cout << "checking first conflict" << endl;
-            /*bool used_plug_table[26];
-            for (int i = 0; i < 26; i++)
-                used_plug_table[i] = false;
-            bool is_any_set_valid;
-            for (int i = 0; i < 26; ++i){
-                // iter all plug of letter
-                if(plugboard[i].empty())
-                    continue;
-                if(plugboard[i].size() == 1 && !used_plug_table[i]){
-                    is_any_set_valid = false;
-                    if(!(used_plug_table[i] || used_plug_table[plugboard[i][0]])){*/
-                        /* if both of them are false */
-                        /*is_any_set_valid = true;
-                        used_plug_table[i] = used_plug_table[plugboard[i][0]] = true;
-                    }else{ // the only possible plug (certain one) conflict, means init_step set is wrong.
-                        cout << "first conflict check fail" << endl;
-                        return false;
-                    }
-                }
-            }*/
             cout << "spanning possibilities" << endl;
             /* do whole possibilities check by span all */
             for (int i = 0; i < 26; ++i){
@@ -257,6 +236,13 @@ class bombe_rotor{
             for (int i = 0; i < 26; ++i)
                 a[i] = b[i];
         }
+        inline bool is_value_in_vec(const vector<int> &vec, const int &num){
+            for (int i = 0; i < vec.size(); ++i){
+                if(vec[i] == num)
+                    return true;
+            }
+            return false;
+        }
         inline bool connect_plugboard(array<int, 26> &arr, const int &a, const int &b){
             if(a!=b){
                 if((arr[a] == -1) && (arr[b] == -1)){
@@ -279,13 +265,7 @@ class bombe_rotor{
                 return false;
             }
         }
-        inline bool is_value_in_vec(const vector<int> &vec, const int &num){
-            for (int i = 0; i < vec.size(); ++i){
-                if(vec[i] == num)
-                    return true;
-            }
-            return false;
-        }
+        
         inline void print_vec(const vector<int> &vec){
             for (int i = 0; i < vec.size(); ++i){
                 cout << vec[i] << " ";
