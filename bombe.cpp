@@ -202,6 +202,7 @@ class bombe_rotor{
             }
             cout << "plugboard final print" << endl;
             print_plugboard_possibilities(plugboard_possibilities);
+            cout << plugboard_possibilities.size() << endl;
             /* brute test all possibilities */
             return true;
         }
@@ -270,9 +271,10 @@ class bombe_rotor{
             return true;
         }
         inline void print_plugboard_possibilities(const vector<array<int, 26>> &pb){
+            return;
             for (int i = 0; i<pb.size(); ++i){
                 for (int k = 0; k < 26; ++k){
-                    cout << pb[i][k] << "-" << pb[i][k] << " ";
+                    cout << k << "-" << pb[i][k] << " ";
                 }
                 cout << endl;
             }
@@ -371,13 +373,15 @@ class bombe_rotor{
                 due to the plugboard relationship will all relative to the head letter of the loop 
                 this function's goal is to make loops for every letter to make maximum data usage and the minimum possibilities try cost.
             */
-            array<bool, 26> bool_head_letters, all_letter_in_loop, spanable_letters;
+            array<bool, 26> bool_head_letters, bool_letter_in_loop, spanable_letters;
+            array<int, 26> arr_loop_for_head_letter;
+            arr_loop_for_head_letter.fill(0);
             bool_head_letters.fill(false);
-            all_letter_in_loop.fill(false);
+            bool_letter_in_loop.fill(false);
             for (int i = 0; i < vec_loops.size(); ++i){
                 bool_head_letters[vec_loops[i][0]] = true;
                 for (int k = 0; k < vec_loops[i].size(); ++k){
-                    all_letter_in_loop[vec_loops[i][k]] = true;
+                    bool_letter_in_loop[vec_loops[i][k]] = true;
                 }
             }
             cout << "reorganize_loops" << endl;
@@ -387,10 +391,10 @@ class bombe_rotor{
                 }
             }
             cout << endl;
-            arrcpy(spanable_letters, all_letter_in_loop);
+            arrcpy(spanable_letters, bool_letter_in_loop);
             cout << "all letter in loop" << endl;
             for (int i = 0; i < 26; ++i){
-                if(all_letter_in_loop[i]){
+                if(bool_letter_in_loop[i]){
                     cout << static_cast<char>(i + 65) << " ";
                     if(bool_head_letters[i]){
                         spanable_letters[i] = false;
@@ -415,6 +419,13 @@ class bombe_rotor{
                         }
                     }
                 }
+            }
+            for (int i = 0; i<vec_loops.size(); ++i){
+                if(arr_loop_for_head_letter[vec_loops[i][0]]>=5){
+                    vec_loops.erase(vec_loops.begin() + i);
+                    --i;
+                }
+                ++arr_loop_for_head_letter[vec_loops[i][0]];
             }
         }
         int is_letter_exists_in_loop(int value, const vector<int> &loop){
@@ -501,11 +512,12 @@ int main(){
     br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
     //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
     br.find_loops();
+    br.reorganize_loops();
     cout << "find finished" << endl;
     br.enigma_machine.load_rotors_configs();
     br.enigma_machine.selected_rotors_index = {0, 1, 2};
     br.init_steps = {0, 0, 0};
-    //br.test_enigma_init_steps();
-    br.reorganize_loops();
+    br.test_enigma_init_steps();
+    
     return 0;
 }
