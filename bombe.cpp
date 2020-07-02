@@ -209,6 +209,10 @@ class bombe_rotor{
             for (int i = 0; i < 26; ++i)
                 a[i] = b[i];
         }
+        inline void arrcpy(array<bool, 26> &a, const array<bool, 26> &b){
+            for (int i = 0; i < 26; ++i)
+                a[i] = b[i];
+        }
         inline bool connect_plugboard(array<int, 26> &arr, const int &a, const int &b){
             if(a!=b){
                 if((arr[a] == -1) && (arr[b] == -1)){
@@ -367,25 +371,49 @@ class bombe_rotor{
                 due to the plugboard relationship will all relative to the head letter of the loop 
                 this function's goal is to make loops for every letter to make maximum data usage and the minimum possibilities try cost.
             */
-            array<bool, 26> bool_letters_with_loop, all_letter_in_loop;
-            bool_letters_with_loop.fill(false);
+            array<bool, 26> bool_head_letters, all_letter_in_loop, spanable_letters;
+            bool_head_letters.fill(false);
             all_letter_in_loop.fill(false);
             for (int i = 0; i < vec_loops.size(); ++i){
-                bool_letters_with_loop[vec_loops[i][0]] = true;
+                bool_head_letters[vec_loops[i][0]] = true;
                 for (int k = 0; k < vec_loops[i].size(); ++k){
                     all_letter_in_loop[vec_loops[i][k]] = true;
                 }
             }
             cout << "reorganize_loops" << endl;
             for (int i = 0; i < 26; ++i){
-                if(bool_letters_with_loop[i]){
-                    cout << static_cast<char>(i + 65) << " " << endl;
+                if(bool_head_letters[i]){
+                    cout << static_cast<char>(i + 65) << " ";
                 }
             }
+            cout << endl;
+            arrcpy(spanable_letters, all_letter_in_loop);
             cout << "all letter in loop" << endl;
             for (int i = 0; i < 26; ++i){
                 if(all_letter_in_loop[i]){
-                    cout << static_cast<char>(i + 65) << " " << endl;
+                    cout << static_cast<char>(i + 65) << " ";
+                    if(bool_head_letters[i]){
+                        spanable_letters[i] = false;
+                    }
+                }
+            }
+            cout << endl;
+            /* phase: span the letters in spanable_letters */
+            vector<int> span_loop;
+            for (int i = 0; i < 26; ++i){
+                if(spanable_letters[i]){
+                    for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index){
+                        if(is_letter_exists_in_loop(i, vec_loops[loop_index]) != (-1)){
+                            span_loop = change_loop_start_letter(vec_loops[loop_index], i);
+                            if(span_loop.empty()){
+                                cout << "find span_letter unexpected error";
+                                return;
+                            }
+                            vec_loops.push_back(span_loop);
+                            // current set one to be the goal num of loop for new spanned letter. so break here.
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -448,7 +476,8 @@ class bombe_rotor{
                     break;
                 }
             }
-            return vector<int>(0);
+            if(index == -1)
+                return vector<int>(0);
             vector<int> new_loop;
             if(index != 0){
                 new_loop.assign(loop.begin() + index, loop.end());
@@ -476,7 +505,7 @@ int main(){
     br.enigma_machine.load_rotors_configs();
     br.enigma_machine.selected_rotors_index = {0, 1, 2};
     br.init_steps = {0, 0, 0};
-    br.test_enigma_init_steps();
-    //br.reorganize_loops();
+    //br.test_enigma_init_steps();
+    br.reorganize_loops();
     return 0;
 }
