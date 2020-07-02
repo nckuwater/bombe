@@ -100,6 +100,13 @@ void enigma::add_one_step(){
     if(current_steps[0] > 25)
         current_steps[0] %= 26;
 }
+string enigma::plugboard_convert(string str){
+    for (int i = 0; i < str.length(); ++i){
+        str[i] = plugboard_set[str[i] - 65] + 65;
+    }
+    return str;
+}
+
 char enigma::single_enigma_calculate(int step, char c){
     int num_of_selected_rotors = selected_rotors_index.size();
     set_current_steps(++step);
@@ -126,13 +133,14 @@ char enigma::single_enigma_calculate(int step, char c){
 
 string enigma::string_enigma_calculate(string plain){
     string cipher;
+    cipher = plugboard_convert(cipher);
     cout << "plain : " << endl
          << plain << endl;
     for (int i = 0; i < plain.size(); ++i){
         //cipher += static_cast<char>(single_enigma_calculate( i, plain[i]-65) + 65);
         cipher += static_cast<char>(single_enigma_calculate( i, plain[i]-65) + 65);
     }
-    return cipher;
+    return plugboard_convert(cipher);
 }
 
 void enigma::printChar(char num){

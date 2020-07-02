@@ -87,7 +87,7 @@ class bombe_rotor{
                     //plugboard[last_letter].erase(plugboard[last_letter].begin(), plugboard[last_letter].end() - 1);
                     //plugboard[target_letter].assign(1, last_letter);
                     //plugboard[last_letter].assign(1, target_letter);
-                }else if(num_of_match_letter<minimum_founded_possibilitiy_for_plug[target_letter]){
+                }else if(num_of_match_letter < minimum_founded_possibilitiy_for_plug[target_letter]){
                     minimum_founded_possibilitiy_for_plug[target_letter] = num_of_match_letter;
                     plugboard[target_letter].erase(plugboard[target_letter].end() - num_of_match_letter, plugboard[target_letter].end());
                 }
@@ -171,7 +171,7 @@ class bombe_rotor{
                 connect_plugboard(plugboard_possibilities[i], 0, plugboard[0][i]);
             }
             int num_of_task = plugboard_possibilities.size();
-
+            int temp_try_arr[2];
             /* Process: remove base_arr, and add new_arr to possibilities */
             for (int letter = 1; letter < 26; ++letter){
                 cout << "tasks: " << num_of_task << endl;
@@ -182,6 +182,7 @@ class bombe_rotor{
                     // store first possibility to base_arr and process later.
                     // base_arr now have define letter-1 plugs
                     arrcpy(base_arr, plugboard_possibilities[0]);
+                    arrcpy(try_arr, base_arr);
                     //print_arr(base_arr);
                     plugboard_possibilities.erase(plugboard_possibilities.begin());
                     for (int k = 0; k < plugboard[letter].size(); ++k)
@@ -194,16 +195,30 @@ class bombe_rotor{
                             plugboard_possibilities.push_back(array<int, 26>());
                             plugboard_possibilities[plugboard_possibilities.size() - 1] = base_arr;
                         }*/
-                        arrcpy(try_arr, base_arr);
-                        if(connect_plugboard(try_arr, letter, plugboard[letter][k])){
-                            plugboard_possibilities.push_back(array<int, 26>());
-                            arrcpy(plugboard_possibilities[plugboard_possibilities.size() - 1], try_arr);
-                            //cout << "try_arr " << letter << ":" << plugboard[letter][k] << endl;
-                            //print_arr(try_arr);
+                        //arrcpy(try_arr, base_arr); replaced by reset to base_arr.
+                        // backup for resume to base_arr
+                        temp_try_arr[0] = try_arr[letter];
+                        temp_try_arr[1] = try_arr[plugboard[letter][k]];
+                        if(is_value_in_vec(plugboard[plugboard[letter][k]], letter)){
+                            if(connect_plugboard(try_arr, letter, plugboard[letter][k])){
+                                /* no conflict during plug set */
+                                plugboard_possibilities.push_back(array<int, 26>());
+                                arrcpy(plugboard_possibilities[plugboard_possibilities.size() - 1], try_arr);
+                                //cout << "try_arr " << letter << ":" << plugboard[letter][k] << endl;
+                                ///print_arr(try_arr);
+                                // resume to base_arr
+                                try_arr[letter] = temp_try_arr[0];
+                                try_arr[plugboard[letter][k]] = temp_try_arr[1];
+                                }
+                            else{
+
+                            }
                         }
-                        else{
-                            
-                        }
+                        
+                        
+                    }
+                    if(plugboard[letter].size()==0){
+                        cout << "plugboard[letter[ size == 0" << endl;
                     }
                 }
             }
@@ -211,6 +226,23 @@ class bombe_rotor{
             print_plugboard_possibilities(plugboard_possibilities);
             cout << plugboard_possibilities.size() << endl;
             /* brute test all possibilities */
+            bool bool_pass_all_text_test;
+            for (int i = 0; i < plugboard_possibilities.size(); ++i){
+                arrcpy(enigma_machine.plugboard_set, plugboard_possibilities[i]);
+                bool_pass_all_text_test = true;
+                for (int text_index = 0; text_index < vec_plain.size(); ++text_index){
+                    if (!(enigma_machine.string_enigma_calculate(vec_plain[text_index]) == vec_cipher[text_index])){
+                        cout << "plain, cipher test failed" << endl;
+                        bool_pass_all_text_test = false;
+                        break;
+                    }
+                }
+                if(bool_pass_all_text_test){
+                    cout << "final result: found right init step and rotors set" << endl;
+                    print_arr(plugboard_possibilities[i]);
+                    return true;
+                }
+            }
             return true;
         }
         inline void arrcpy(array<int, 26> &a, const array<int, 26> &b){
@@ -568,6 +600,7 @@ int main(){
     br.add_text_to_bombe_menu("WORLDWARTWO", "KIXDIACTHJL");
     br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
     br.add_text_to_bombe_menu("ADDITIONALMSG", "BAJQXLMMLPTAH");
+    br.add_text_to_bombe_menu("MOREANDMORE", "DIXWOEFNMXN");
     //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
     br.find_loops();
     br.reorganize_loops();

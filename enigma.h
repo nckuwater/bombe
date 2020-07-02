@@ -7,6 +7,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
+#include <array>
 using namespace std;
 
 class enigma{
@@ -15,6 +16,7 @@ class enigma{
         static vector<char*> rotors_set, inverse_rotors_set, reflector_set;
         vector<int> selected_rotors_index, current_steps, init_steps;
         int reflector_index, num_of_rotors;
+        array<int, 26> plugboard_set;
         //static bool is_loaded_config_files;
 
         /* Functions */
@@ -24,6 +26,7 @@ class enigma{
         void set_init_steps(vector<int> input_init_steps);
         vector<int> set_current_steps(int step);// return the result of (init + step)
         void add_one_step();
+        string plugboard_convert(string str);
         char single_enigma_calculate(int step, char c);
         string string_enigma_calculate(string plain);
         void printChar(char num);
