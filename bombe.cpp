@@ -35,6 +35,17 @@ class bombe_rotor{
             for (int i = 0; i < 26; ++i)
                 a[i] = b[i];
         }
+        /* Basic input operations */
+        void load_text_from_file(string path = "./bombe_pc.txt"){
+            ifstream infile(path, ios::in);
+            string buff;
+            int len;
+            while(infile >> buff){
+                len = (buff.length() - 1) / 2;
+                add_text_to_bombe_menu(buff.substr(0, len), buff.substr(len+1 , len));
+                cout << buff.substr(0, len) << "---" << buff.substr(len + 1, len) << endl;
+            }
+        }
         /* Basic output operations */
         inline void print_vec(const vector<int> &vec){
             for (int i = 0; i < vec.size(); ++i){
@@ -56,6 +67,12 @@ class bombe_rotor{
         inline void print_arr(const array<int, 26> &arr){
             for (int i = 0; i < 26;++i){
                 cout << setw(2) << arr[i] << " ";
+            }
+            cout << endl;
+        }
+        inline void print_plugboard(const array<int, 26> &pb){
+            for (int i = 0; i < 26; ++i){
+                cout << static_cast<char>(i+65) << static_cast<char>(pb[i] + 65) << " ";
             }
             cout << endl;
         }
@@ -238,7 +255,7 @@ class bombe_rotor{
             minimum_founded_possibilitiy_for_plug.fill(26);
             for (int loop_index = 0; loop_index < vec_loops.size(); ++loop_index)
             {
-                cout << loop_index << endl;
+                //cout << loop_index << endl;
                 target_letter = vec_loops[loop_index][0];
                 //cout << "TLL: " << target_letter << endl;
                 is_letter_match = false;
@@ -272,12 +289,12 @@ class bombe_rotor{
                 }
                 if(!is_letter_match){
                     /* if any one of loop has no letter match, means that the init_step set is wrong. */
-                    cout << "no letter match for one of loops" << endl;
+                    //cout << "no letter match for one of loops" << endl;
                     return false;
                 }
                 if(num_of_match_letter == 1){//confirm case
                     if(!connect_plugboard(confirmed_plugs, target_letter, last_letter)){
-                        cout << "confirmed_plug detect conflict" << endl;
+                        ///cout << "confirmed_plug detect conflict" << endl;
                         return false;
                     }
                     //confirmed_plugs[target_letter] = true;
@@ -409,7 +426,7 @@ class bombe_rotor{
                 arrcpy(enigma_machine.plugboard_set, plugboard_possibilities[i]);
                 bool_pass_all_text_test = true;
                 for (int text_index = 0; text_index < vec_plain.size(); ++text_index){
-                    if (!(enigma_machine.string_enigma_calculate(vec_plain[text_index]) == vec_cipher[text_index])){
+                    if (enigma_machine.string_enigma_calculate(vec_plain[text_index]) != vec_cipher[text_index]){
                         cout << "plain, cipher test failed" << endl;
                         bool_pass_all_text_test = false;
                         break;
@@ -422,7 +439,7 @@ class bombe_rotor{
                     return true;
                 }
             }
-            return true;
+            return false;
         }// end of test_enigma_init_steps() //
         
         inline bool is_value_in_vec(const vector<int> &vec, const int &num){
@@ -582,30 +599,26 @@ int main(){
     br.add_text_to_bombe_menu("WEATHERREPORT", "KLZFMNNTWLLLN");
     br.add_text_to_bombe_menu("ADDITIONALMSG", "BAJQXLMMLPTAH");
     br.add_text_to_bombe_menu("MOREANDMORE", "DIXWOEFNMXN");*/
-
-    //br.add_text_to_bombe_menu("ABCDEFGHIJK", "BJELRQZVJWA");
-
-    br.add_text_to_bombe_menu("TURING", "CWNALR");
-    br.add_text_to_bombe_menu("ENIGMAISAMACHINE", "AHATPVRXBEWTQYBD");
-    br.add_text_to_bombe_menu("PROCESSISFAULT", "ZZBWOBGUGRWGRA");
-    br.add_text_to_bombe_menu("WEDIDIT", "NXHAAHZ");
-    br.add_text_to_bombe_menu("ADDITIONALMSG", "EBHAXHBQBVKLY");
+    br.load_text_from_file();
     br.find_loops();
     br.reorganize_loops();
     cout << "loop generate finished" << endl;
     br.enigma_machine.load_rotors_configs();
-    vector<int> rotors_index = {0, 1, 2};
+    vector<int> rotors_index = {0, 1, 2}, init_steps_result;
     array<int, 26> plugboard_result;
     br.init_steps = {0, 0, 0};
-    for (int r1 = 0; r1 < 3; ++r1){
-        for (int r2 = 0; r2 < 3; ++r2){
-            for (int r3 = 0; r3 < 3; ++r3){
+    int num_of_rotors = br.enigma_machine.rotors_set.size();
+    for (int r1 = 0; r1 < num_of_rotors; ++r1){
+        for (int r2 = 0; r2 < num_of_rotors; ++r2){
+            for (int r3 = 0; r3 < num_of_rotors; ++r3){
                 if(r1!=r2 && r2!=r3 && r1!=r3){
                     br.enigma_machine.selected_rotors_index = {r1, r2, r3};
+                    br.print_vec(br.enigma_machine.selected_rotors_index);
                     for (int i = 0; i < 26 * 26 * 26; ++i){
                         if(br.test_enigma_init_steps()){
                             rotors_index = br.enigma_machine.selected_rotors_index;
                             br.arrcpy(plugboard_result, br.plugboard_result);
+                            init_steps_result = br.enigma_machine.init_steps;
                             break;
                         }
                         br.add_one_init_step();
@@ -614,9 +627,14 @@ int main(){
             }
         }
     }
+    cout << "--RESULT--" << endl;
     for (int i = 0; i < 3; ++i){
-        cout << rotors_index[i] << " ";
+        cout << rotors_index[i]+1 << " ";
     }
+    cout << endl;
+    br.print_vec(init_steps_result);
+    //br.print_arr(br.plugboard_result);
+    br.print_plugboard(br.plugboard_result);
     cout << endl;
     //br.enigma_machine.selected_rotors_index = {0, 1, 2};
     return 0;

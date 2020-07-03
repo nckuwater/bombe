@@ -133,7 +133,7 @@ char enigma::single_enigma_calculate(int step, char c){
 
 string enigma::string_enigma_calculate(string plain){
     string cipher;
-    cipher = plugboard_convert(cipher);
+    plain = plugboard_convert(plain);
     /*cout << "plain : " << endl
          << plain << endl;*/
     for (int i = 0; i < plain.size(); ++i){
