@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include "enigma.h"
-#include "bombe.h"
+#include "bombe_rotor.h"
 
 using namespace std;
 
