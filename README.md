@@ -1,5 +1,6 @@
-# bombe
-A Enigma cracker based on the mechanism of bombe machine.
+# Bombe
+An Enigma cracker based on the mechanism of the bombe machine.
+
 ## Settings
 set the known plain-cipher pair in bombe_pc.txt.
 rotors_config.txt contains the letter config for each rotor.
