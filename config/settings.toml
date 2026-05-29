@@ -1,0 +1,21 @@
+[bombe]
+# Maximum number of scrambler drums to use from the menu.
+# 0 = unlimited (use every edge). Set to 36 to simulate the physical Bombe.
+max_scramblers = 0
+
+# If true, search all 26^2 combinations of ring settings for the left and
+# middle rotors (the rightmost ring is always fixed at 0).
+# Warning: enables a 676x larger search space.
+search_ring_settings = false
+
+# Ring settings used when search_ring_settings = false.
+# Format: [left, middle, right]  (right is always ignored / forced to 0)
+fixed_ring_settings = [0, 0, 0]
+
+[enigma]
+# Reflector to use (must match an id in machine.toml).
+reflector = "UKW-B"
+
+# Uncomment to restrict the search to specific rotors (names matching machine.toml).
+# Leave empty to try all permutations.
+# rotors = ["I", "II", "III"]

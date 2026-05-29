@@ -1,0 +1,34 @@
+# Enigma rotor and reflector definitions.
+# Wiring strings are the historical Wehrmacht/Luftwaffe Enigma I rotors (I-V)
+# and the UKW-B reflector.
+#
+# notch: the window position at which this rotor causes the left neighbour to step.
+
+[[rotors]]
+name   = "I"
+wiring = "EKMFLGDQVZNTOWYHXUSPAIBRCJ"
+notch  = "Q"
+
+[[rotors]]
+name   = "II"
+wiring = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
+notch  = "E"
+
+[[rotors]]
+name   = "III"
+wiring = "BDFHJLCPRTXVZNYEIWGAKMUSQO"
+notch  = "V"
+
+[[rotors]]
+name   = "IV"
+wiring = "ESOVPZJAYQUIRHXLNFTGKDCMWB"
+notch  = "J"
+
+[[rotors]]
+name   = "V"
+wiring = "VZBRGITYUPSDNHLXAWMJQOFECK"
+notch  = "Z"
+
+[[reflectors]]
+name   = "UKW-B"
+wiring = "YRUHQSLDPXNGOKMIEBFZCWVJAT"

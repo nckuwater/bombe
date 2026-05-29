@@ -1,0 +1,14 @@
+build/
+*.o
+*.a
+
+# Root-level stray crib files (use cribs/ directory instead)
+crib_*.toml
+bombe_pc.toml
+
+# Temporary binaries compiled outside build/
+bombe_bin
+bombe_old
+generate_crib
+verify*
+/tmp/
