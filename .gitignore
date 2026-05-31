@@ -2,7 +2,8 @@ build/
 *.o
 *.a
 
-# Root-level stray crib files (use cribs/ directory instead)
+# Generated crib files — run scripts/generate.sh to create them
+cribs/*.toml
 crib_*.toml
 bombe_pc.toml
 
@@ -11,4 +12,3 @@ bombe_bin
 bombe_old
 generate_crib
 verify*
-/tmp/

@@ -1,34 +1,130 @@
-# Enigma rotor and reflector definitions.
-# Wiring strings are the historical Wehrmacht/Luftwaffe Enigma I rotors (I-V)
-# and the UKW-B reflector.
+# Enigma machine rotor, reflector, and historical set definitions.
+# Sources: Enigma rotor details (Wikipedia), David Hamer, CryptoMuseum.
 #
-# notch: the window position at which this rotor causes the left neighbour to step.
+# notch: the window position(s) at which this rotor causes the left
+#        neighbour to step.  Rotors VI-VIII have two notch positions.
+
+# ── Standard rotors (Wehrmacht / Luftwaffe / Kriegsmarine) ───────────────────
 
 [[rotors]]
 name   = "I"
 wiring = "EKMFLGDQVZNTOWYHXUSPAIBRCJ"
-notch  = "Q"
+notch  = ["Q"]
 
 [[rotors]]
 name   = "II"
 wiring = "AJDKSIRUXBLHWTMCQGZNPYFVOE"
-notch  = "E"
+notch  = ["E"]
 
 [[rotors]]
 name   = "III"
 wiring = "BDFHJLCPRTXVZNYEIWGAKMUSQO"
-notch  = "V"
+notch  = ["V"]
 
 [[rotors]]
 name   = "IV"
 wiring = "ESOVPZJAYQUIRHXLNFTGKDCMWB"
-notch  = "J"
+notch  = ["J"]
 
 [[rotors]]
 name   = "V"
 wiring = "VZBRGITYUPSDNHLXAWMJQOFECK"
-notch  = "Z"
+notch  = ["Z"]
+
+# ── Naval rotors (Kriegsmarine only, double notch) ───────────────────────────
+
+[[rotors]]
+name   = "VI"
+wiring = "JPGVOUMFYQBENHZRDKASXLICTW"
+notch  = ["Z", "M"]
+
+[[rotors]]
+name   = "VII"
+wiring = "NZJHGRCXMYSWBOUFAIVLPEKQDT"
+notch  = ["Z", "M"]
+
+[[rotors]]
+name   = "VIII"
+wiring = "FKQHTLXOCBJSPDZRAMEWNIUYGV"
+notch  = ["Z", "M"]
+
+# ── M4 thin rotors (non-stepping, used as static 4th rotor) ─────────────────
+# These never rotate during encipherment; they are set once per message.
+
+[[rotors]]
+name   = "Beta"
+wiring = "LEYJVCNIXWPBQMDRTAKZGFUHOS"
+notch  = []
+thin   = true
+
+[[rotors]]
+name   = "Gamma"
+wiring = "FSOKANUERHMBTIYCWLQPZXVGJD"
+notch  = []
+thin   = true
+
+# ── Reflectors ───────────────────────────────────────────────────────────────
 
 [[reflectors]]
 name   = "UKW-B"
 wiring = "YRUHQSLDPXNGOKMIEBFZCWVJAT"
+
+[[reflectors]]
+name   = "UKW-C"
+wiring = "FVPJIAOYEDRZXWGCTKUQSBNMHL"
+
+[[reflectors]]
+name   = "UKW-A"
+wiring = "EJMZALYXVBWFCRQUONTSPIKHGD"
+
+# M4 thin reflectors (paired: UKW-B-thin + Beta, UKW-C-thin + Gamma)
+[[reflectors]]
+name   = "UKW-B-thin"
+wiring = "ENKQAUYWJICOPBLMDXZVFTHRGS"
+thin   = true
+
+[[reflectors]]
+name   = "UKW-C-thin"
+wiring = "RDOBJNTKVEHMLFCWZAXGYIPSUQ"
+thin   = true
+
+# ── Historical sets ──────────────────────────────────────────────────────────
+# Each set defines the equipment available for a specific machine/period.
+# The Bombe can be told to restrict its search to one set.
+
+[[sets]]
+name        = "Wehrmacht/Luftwaffe 1930"
+description = "Initial Army/Luftwaffe deployment — 3 rotors, UKW-A"
+rotors      = ["I", "II", "III"]
+reflectors  = ["UKW-A"]
+pick        = 3
+
+[[sets]]
+name        = "Wehrmacht/Luftwaffe 1939"
+description = "Expanded pool after 1939 — 5 rotors to choose 3 from, UKW-B"
+rotors      = ["I", "II", "III", "IV", "V"]
+reflectors  = ["UKW-B"]
+pick        = 3
+
+[[sets]]
+name        = "Kriegsmarine M3 1934"
+description = "Naval 3-rotor Enigma, initial deployment"
+rotors      = ["I", "II", "III", "IV", "V"]
+reflectors  = ["UKW-B", "UKW-C"]
+pick        = 3
+
+[[sets]]
+name        = "Kriegsmarine M3 1939"
+description = "Naval 3-rotor with exclusive naval rotors VI-VIII added"
+rotors      = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"]
+reflectors  = ["UKW-B", "UKW-C"]
+pick        = 3
+
+[[sets]]
+name        = "Kriegsmarine M4 1942"
+description = "4-rotor Naval Enigma (Shark/Triton network, Feb 1942)"
+rotors      = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"]
+thin_rotors = ["Beta", "Gamma"]
+reflectors  = ["UKW-B-thin", "UKW-C-thin"]
+pick        = 3
+thin_pick   = 1

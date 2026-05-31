@@ -173,7 +173,6 @@ private:
     // -------------------------------------------------------------------------
     void move_to_row(int row) const {
         // Go to column 1 of the last row in the block, then up as needed.
-        int up_count = kRows - 1 - row;
         // Move to bottom of block: move down (kRows-1 - current_row_from_top)
         // Since we don't track current row, we go to bottom and come back up.
         // Simpler: always go to top of block first using a known reference.
@@ -293,7 +292,12 @@ private:
         for (int r : rotors) names += "[ " + cat.rotors[r].name + " ] ";
 
         std::string notches = "  notch:";
-        for (int r : rotors) notches += "  " + std::string(1, bombe::idx_to_char(cat.rotors[r].turnover_notch));
+        for (int r : rotors) {
+            notches += " ";
+            for (int n : cat.rotors[r].notches)
+                notches += std::string(1, bombe::idx_to_char(n));
+            if (cat.rotors[r].notches.empty()) notches += "-";
+        }
 
         std::string combo_s = "combo " + std::to_string(combo) + " / " + std::to_string(total);
 

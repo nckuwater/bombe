@@ -18,12 +18,16 @@ bool Enigma::load_catalog(std::string_view path) {
             const auto& tbl = *node.as_table();
             Rotor r;
             r.name = tbl["name"].value<std::string>().value();
-            auto wiring     = tbl["wiring"].value<std::string>().value();
-            auto notch_str  = tbl["notch"].value<std::string>().value();
-            r.turnover_notch = char_to_idx(notch_str[0]);
+            r.thin = tbl["thin"].value<bool>().value_or(false);
+            auto wiring = tbl["wiring"].value<std::string>().value();
             for (int i = 0; i < kAlphabetSize; ++i) {
                 r.forward_wiring[i]                      = char_to_idx(wiring[i]);
                 r.inverse_wiring[char_to_idx(wiring[i])] = i;
+            }
+            if (auto* arr = tbl["notch"].as_array()) {
+                for (const auto& v : *arr)
+                    if (auto s = v.value<std::string>())
+                        r.notches.push_back(char_to_idx((*s)[0]));
             }
             catalog_.rotors.push_back(std::move(r));
         }
@@ -57,23 +61,42 @@ bool Enigma::load_catalog(std::string_view path) {
 //   The turnover notch is on the outer alphabet ring and is therefore
 //   independent of ring setting (ring setting only shifts the internal wiring).
 // ---------------------------------------------------------------------------
+// Returns true if a rotor's current position is at any of its notches.
+static bool at_notch(const bombe::Rotor& r, int pos) {
+    for (int n : r.notches) if (pos == n) return true;
+    return false;
+}
+
 void Enigma::advance_one(std::vector<int>& pos) const {
     const int n = static_cast<int>(pos.size());
-    if (n >= 3) {
-        const bool mid_at_notch   = (pos[n-2] == catalog_.rotors[config_.rotor_indices[n-2]].turnover_notch);
-        const bool right_at_notch = (pos[n-1] == catalog_.rotors[config_.rotor_indices[n-1]].turnover_notch);
-        if (mid_at_notch) {
-            pos[n-3] = (pos[n-3] + 1) % kAlphabetSize;   // left steps
-            pos[n-2] = (pos[n-2] + 1) % kAlphabetSize;   // middle double-steps
+    const auto& rotors = catalog_.rotors;
+    const auto& idx    = config_.rotor_indices;
+
+    // Thin rotors (M4 Beta/Gamma) never step.
+    // The effective stepping rotors are the rightmost non-thin ones.
+    // For a standard 3-rotor or M4 4-rotor setup we find the first
+    // three non-thin rotors from the right.
+    std::vector<int> step_slots;   // indices into pos[] that can step
+    for (int i = n - 1; i >= 0 && static_cast<int>(step_slots.size()) < 3; --i) {
+        if (!rotors[idx[i]].thin) step_slots.push_back(i);
+    }
+    // step_slots[0] = rightmost stepping slot, [1] = middle, [2] = left
+
+    if (step_slots.size() >= 2) {
+        bool mid_at_notch   = step_slots.size() >= 2 &&
+                              at_notch(rotors[idx[step_slots[1]]], pos[step_slots[1]]);
+        bool right_at_notch = at_notch(rotors[idx[step_slots[0]]], pos[step_slots[0]]);
+
+        if (mid_at_notch && step_slots.size() >= 3) {
+            pos[step_slots[2]] = (pos[step_slots[2]] + 1) % kAlphabetSize;  // left steps
+            pos[step_slots[1]] = (pos[step_slots[1]] + 1) % kAlphabetSize;  // mid double-steps
         }
         if (right_at_notch) {
-            pos[n-2] = (pos[n-2] + 1) % kAlphabetSize;   // middle steps
+            pos[step_slots[1]] = (pos[step_slots[1]] + 1) % kAlphabetSize;  // mid steps
         }
-    } else if (n == 2) {
-        if (pos[1] == catalog_.rotors[config_.rotor_indices[1]].turnover_notch)
-            pos[0] = (pos[0] + 1) % kAlphabetSize;
     }
-    pos[n-1] = (pos[n-1] + 1) % kAlphabetSize;            // rightmost always steps
+    if (!step_slots.empty())
+        pos[step_slots[0]] = (pos[step_slots[0]] + 1) % kAlphabetSize;  // rightmost always steps
 }
 
 std::vector<int> Enigma::advance_n(std::vector<int> pos, int n) const {

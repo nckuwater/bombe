@@ -12,10 +12,11 @@ namespace bombe {
 // ---------------------------------------------------------------------------
 
 struct Rotor {
-    std::string name;                                // historical designation e.g. "I", "IV"
-    std::array<int, kAlphabetSize> forward_wiring;   // index i -> output letter
-    std::array<int, kAlphabetSize> inverse_wiring;   // derived inverse
-    int turnover_notch;  // window position (0-25) that causes the left neighbour to step
+    std::string name;                                // historical designation e.g. "I", "VIII"
+    std::array<int, kAlphabetSize> forward_wiring;
+    std::array<int, kAlphabetSize> inverse_wiring;
+    std::vector<int> notches;  // turnover positions (0-25); most rotors have 1, VI-VIII have 2
+    bool thin = false;         // M4 thin rotors never step
 };
 
 struct Reflector {
